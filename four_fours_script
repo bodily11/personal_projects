@@ -1,0 +1,102 @@
+import itertools
+
+# there
+numbers_list = [
+    ['T','T','U','2','4','2','4','Y','Y','Z','Z','V','V','W','W','X','X'], # choose 3
+    ['2','4','T','2','4','T','2','4','T','2','4','T','Y','Z','V','W','Y','Z','V','W','Y','Z','V','W','Y','Z','V','W','X','X','X','X'], # choose 4
+]
+
+# these are the U's
+# these numbers can be created using 2 of the 4 fours
+# I choose 3 from here because I can only use 4 fours, and these use 2
+Us = ['3','5','6','9','10','16','18','20','22','36','42','44','54','60','99','100','108','120','242','244','224','424']
+
+# couldn't get 167...
+for number_to_get in range(167,168):
+    
+    stop_flag = False
+    for numbers in numbers_list:
+        if stop_flag:
+            # if I find an answer for a number then skip the rest
+            continue
+        # select whether to choose 4 or to choose 3
+        if numbers == ['2','4','T','2','4','T','2','4','T','2','4','T','Y','Z','V','W','Y','Z','V','W','Y','Z','V','W','Y','Z','V','W','X','X','X','X']:
+            choose = 4
+        else:
+            choose = 3
+
+        import itertools
+        # create long list of operators
+        operators = ['*']*3 + ['/']*3 + ['-']*3 + ['+']*3 + ['^']*3
+
+        # get all permutations for parentheses, operator placement, and numbers placement
+        operator_placements = list(itertools.permutations(operators, 2)) if choose == 3 else list(itertools.permutations(operators, 3))
+        parentheses_placements = [(0,3),(0,5),(2,5),(2,7),(4,7),'Double'] if choose == 4 else [(0,3),(2,5)]
+        numbers_placement = set(list(itertools.permutations(numbers, 3))) if choose == 3 else set(list(itertools.permutations(numbers, 4)))
+
+        stop_flag = False
+        answer_list = []
+        # loop through all conditions
+        for U in Us:
+            for n in numbers_placement:
+                for o in operator_placements:
+                    for p in parentheses_placements:
+                        if not stop_flag:
+                            if choose == 4:
+                                final = list(n)
+                                # insert operators
+                                final.insert(3,o[2])
+                                final.insert(2,o[1])
+                                final.insert(1,o[0])
+                                # handle two sets of parentheses separately
+                                if p == 'Double':
+                                    final.insert(7,')')
+                                    final.insert(4,'(')
+                                    final.insert(3,')')
+                                    final.insert(0,'(')
+                                # handle single set of parentheses
+                                else:
+                                    final.insert(p[1],')')
+                                    final.insert(p[0],'(')
+                            # handle operator and parentheses insertion separately for choose 3 condition
+                            elif choose == 3:
+                                final = list(n)
+                                final.insert(2,o[1])
+                                final.insert(1,o[0])
+                                final.insert(p[1],')')
+                                final.insert(p[0],'(')
+                            text = ''.join(final)
+                            text = text.replace('^','**')
+                            
+                            # I can't use two character symbols or I will ruin my operator and parentheses placement
+                            # kind of hacky, but these replacements work just fine
+                            text = text.replace('T','24')
+                            text = text.replace('U',U)
+                            text = text.replace('V','(2/9)')
+                            text = text.replace('W','(4/9)')
+                            text = text.replace('X','(2/3)')
+                            text = text.replace('Y','0.4')
+                            text = text.replace('Z','0.2')
+                            
+                            # certain conditions cause long computation times
+                            # catch crazy exponent strings and skip them
+                            x = '24'
+                            if f'**{x}' in text or f'**({x}' in text or f'{x}**' in text:
+                                continue
+                            if f'**{U}' in text or f'**({U}' in text or f'{U}**' in text:
+                                continue
+                            if '**2**' in text or '**4**' in text:
+                                continue
+                            if text.count('*') > 3:
+                                continue
+                            # catch all try except for off chance malformed solutions
+                            # probably shouldn't do this but hasn't hurt me yet
+                            try:
+                                answer = eval(text)
+                            except Exception as e:
+                                continue
+                                #print(e)
+                            # if the evaluated answer matches the number to get, set stop_flag to True and print solution
+                            if answer == number_to_get:
+                                print(number_to_get,text)
+                                stop_flag = True
